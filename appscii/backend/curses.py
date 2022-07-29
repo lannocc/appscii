@@ -30,7 +30,7 @@ class Application:
 
 
 class Window:
-    def __init__(self, x, y, w, h):
+    def __init__(self, app, x, y, w, h):
         win = curses.newwin(h, w, y, x)
         win.keypad(True)
         win.box()

@@ -1,9 +1,7 @@
 from .__version__ import __version__
 from . import system
-if system.windows:
-    raise NotImplementedError('windows support coming soon')
-else:
-    from .backend import curses as backend
+if system.windows: from .backend import windows as backend
+else: from .backend import curses as backend
 
 
 class Application:
@@ -18,7 +16,7 @@ class Application:
             self.refresh_all()
 
             key = self.getch()
-            if key == 27: # escape
+            if key == 27 or key == 3: # escape or ctrl+c
                 break
 
             self.main()
@@ -44,7 +42,7 @@ class Application:
 class Window:
     def __init__(self, app, x, y, w, h):
         self.app = app
-        self.core = backend.Window(x, y, w, h)
+        self.core = backend.Window(app.core, x, y, w, h)
         self.app.windows.append(self)
 
     def refresh(self):
