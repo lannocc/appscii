@@ -20,6 +20,11 @@ def run():
         install_requires=[
             'pywin32 ; platform_system=="Windows"'
         ],
+        entry_points = {
+            'console_scripts': [
+                'appscii=appscii.__main__:run',
+            ],
+        },
     )
 
 
