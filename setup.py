@@ -18,6 +18,7 @@ def run():
             "Operating System :: OS Independent",
         ],
         install_requires=[
+            'pywin32 ; platform_system=="Windows"'
         ],
     )
 
