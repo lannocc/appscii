@@ -10,8 +10,10 @@ class Application:
         curses.noecho()
         curses.cbreak()
         self.screen.keypad(True)
-        curses.set_escdelay(100)
+        curses.set_escdelay(99)
         curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
+
+        self.mbtns = [False, False, False] # mouse buttons (left, mid, right)
 
     def exit(self):
         self.screen.keypad(False)
@@ -25,34 +27,64 @@ class Application:
         self.screen.refresh()
 
     def inputs(self):
-        #from time import sleep
         while self.shell.go:
-            #sleep(1)
             #raise RuntimeError('my bad')
             key = self.screen.getch()
 
             if key == curses.KEY_MOUSE:
                 _, x, y, _, btn = curses.getmouse()
-                self.shell.on_mouse(x, y,
-                    1 if btn & curses.BUTTON1_PRESSED else \
-                    2 if btn & curses.BUTTON1_RELEASED else \
-                    3 if btn & curses.BUTTON1_CLICKED else \
-                    4 if btn & curses.BUTTON1_DOUBLE_CLICKED else \
-                    0,
-                    1 if btn & curses.BUTTON2_PRESSED else \
-                    2 if btn & curses.BUTTON2_RELEASED else \
-                    3 if btn & curses.BUTTON2_CLICKED else \
-                    4 if btn & curses.BUTTON2_DOUBLE_CLICKED else \
-                    0,
-                    1 if btn & curses.BUTTON3_PRESSED else \
-                    2 if btn & curses.BUTTON3_RELEASED else \
-                    3 if btn & curses.BUTTON3_CLICKED else \
-                    4 if btn & curses.BUTTON3_DOUBLE_CLICKED else \
-                    0,
-                    1 if btn & curses.BUTTON4_PRESSED else \
-                    -1 if btn & 2097152 else \
-                    0
-                )
+                mbtns = self.mbtns
+
+                if btn & curses.BUTTON1_PRESSED:
+                    mbtns[0] = True
+                elif btn & curses.BUTTON1_RELEASED:
+                    mbtns[0] = False
+
+                if btn & curses.BUTTON2_PRESSED:
+                    mbtns[1] = True
+                elif btn & curses.BUTTON2_RELEASED:
+                    mbtns[1] = False
+
+                if btn & curses.BUTTON3_PRESSED:
+                    mbtns[2] = True
+                elif btn & curses.BUTTON3_RELEASED:
+                    mbtns[2] = False
+
+                if btn & curses.BUTTON1_CLICKED \
+                        or btn & curses.BUTTON1_DOUBLE_CLICKED:
+                    self.shell.on_mouse(x, y, True, mbtns[1], mbtns[2], 0)
+                    self.shell.on_mouse(x, y, False, mbtns[1], mbtns[2], 0)
+
+                    if btn & curses.BUTTON1_DOUBLE_CLICKED:
+                        self.shell.on_mouse(x, y, True, mbtns[1], mbtns[2], 0)
+                        self.shell.on_mouse(x, y, False, mbtns[1], mbtns[2], 0)
+
+                elif btn & curses.BUTTON2_CLICKED \
+                        or btn & curses.BUTTON2_DOUBLE_CLICKED:
+                    self.shell.on_mouse(x, y, mbtns[0], True, mbtns[2], 0)
+                    self.shell.on_mouse(x, y, mbtns[0], False, mbtns[2], 0)
+
+                    if btn & curses.BUTTON2_DOUBLE_CLICKED:
+                        self.shell.on_mouse(x, y, mbtns[0], True, mbtns[2], 0)
+                        self.shell.on_mouse(x, y, mbtns[0], False, mbtns[2], 0)
+
+                elif btn & curses.BUTTON3_CLICKED \
+                        or btn & curses.BUTTON3_DOUBLE_CLICKED:
+                    self.shell.on_mouse(x, y, mbtns[0], mbtns[1], True, 0)
+                    self.shell.on_mouse(x, y, mbtns[0], mbtns[1], False, 0)
+
+                    if btn & curses.BUTTON3_DOUBLE_CLICKED:
+                        self.shell.on_mouse(x, y, mbtns[0], mbtns[1], True, 0)
+                        self.shell.on_mouse(x, y, mbtns[0], mbtns[1], False, 0)
+
+                elif btn & curses.BUTTON4_PRESSED:
+                    self.shell.on_mouse(x, y, mbtns[0], mbtns[1], mbtns[2], 1)
+
+                elif btn & 2097152:
+                    self.shell.on_mouse(x, y, mbtns[0], mbtns[1], mbtns[2], -1)
+
+                else:
+                    self.shell.on_mouse(x, y, mbtns[0], mbtns[1], mbtns[2], 0)
 
             else:
                 self.shell.on_key(key)
@@ -79,7 +111,4 @@ class Window:
     def refresh(self):
         self.border.refresh()
         self.content.refresh()
-
-    #def scroll(self, lines):
-    #    self.content.scroll(lines)
 

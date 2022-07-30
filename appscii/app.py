@@ -30,8 +30,6 @@ class Application:
     def stop(self, error=None):
         if error:
             if self.error:
-                #try: raise error from self.error
-                #except Exception as e: self.error = e
                 try:
                     raise self.error
                 except Exception as e:
@@ -67,18 +65,14 @@ class Application:
     def on_run(self):
         #raise RuntimeError('yikes')
         self.inputs.join()
-        #from time import sleep
-        #sleep(3)
 
     def on_key(self, key):
-        #if key == 27 or key == 3: # escape or ctrl+c
         if key == 27: # escape
             self.stop()
 
     def on_mouse(self, x, y, left, mid, right, scroll):
-    #def on_mouse(self, flags, btn, pos):
+        # this is just for testing:
         self.windows[0].print(f'{x},{y}: {left},{mid},{right},{scroll}')
-        #self.windows[0].print(f'{flags} | {btn} | {pos}')
         self.windows[0].refresh()
         #self.refresh_all()
 
