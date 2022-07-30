@@ -2,10 +2,9 @@ import curses
 
 
 class Application:
-    def __init__(self):
+    def __init__(self, app):
+        self.app = app
         self.screen = curses.initscr()
-
-    def run(self):
         curses.flushinp()
         curses.curs_set(0)
         curses.noecho()
@@ -14,7 +13,7 @@ class Application:
         curses.set_escdelay(100)
         curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
 
-    def done(self):
+    def exit(self):
         self.screen.keypad(False)
         curses.nocbreak()
         curses.echo()
@@ -25,8 +24,38 @@ class Application:
     def refresh(self):
         self.screen.refresh()
 
-    def getch(self):
-        return self.screen.getch()
+    def inputs(self):
+        #from time import sleep
+        while self.app.go:
+            #sleep(1)
+            #raise RuntimeError('my bad')
+            key = self.screen.getch()
+
+            if key == curses.KEY_MOUSE:
+                _, x, y, _, btn = curses.getmouse()
+                self.app.on_mouse(x, y,
+                    1 if btn & curses.BUTTON1_PRESSED else \
+                    2 if btn & curses.BUTTON1_RELEASED else \
+                    3 if btn & curses.BUTTON1_CLICKED else \
+                    4 if btn & curses.BUTTON1_DOUBLE_CLICKED else \
+                    0,
+                    1 if btn & curses.BUTTON2_PRESSED else \
+                    2 if btn & curses.BUTTON2_RELEASED else \
+                    3 if btn & curses.BUTTON2_CLICKED else \
+                    4 if btn & curses.BUTTON2_DOUBLE_CLICKED else \
+                    0,
+                    1 if btn & curses.BUTTON3_PRESSED else \
+                    2 if btn & curses.BUTTON3_RELEASED else \
+                    3 if btn & curses.BUTTON3_CLICKED else \
+                    4 if btn & curses.BUTTON3_DOUBLE_CLICKED else \
+                    0,
+                    1 if btn & curses.BUTTON4_PRESSED else \
+                    -1 if btn & 2097152 else \
+                    0
+                )
+
+            else:
+                self.app.on_key(key)
 
 
 class Window:
@@ -41,8 +70,11 @@ class Window:
         win.scrollok(True)
         self.content = win
 
+        self.newline = ''
+
     def print(self, txt, end):
-        self.content.addstr(txt + '\n' if end else '')
+        self.content.addstr(f'{self.newline}{txt}')
+        self.newline = '\n' if end else ''
 
     def refresh(self):
         self.border.refresh()
