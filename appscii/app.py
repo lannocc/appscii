@@ -75,6 +75,7 @@ class Application:
         self.windows[0].print(f'{x},{y}: {left},{mid},{right},{scroll}')
         self.windows[0].refresh()
         #self.refresh_all()
+        pass
 
 
 class ThreadException(Exception):

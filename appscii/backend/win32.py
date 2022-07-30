@@ -1,7 +1,6 @@
 import win32con
 import win32file
 from win32console import *
-#import msvcrt
 
 
 class Application:
@@ -35,13 +34,6 @@ class Application:
 
     def inputs(self):
         while self.shell.go:
-            #key = ord(msvcrt.getch())
-
-            #if key == 3: # ctrl-c
-            #    raise KeyboardInterrupt()
-
-            #self.shell.on_key(key)
-
             for input in self.console.ReadConsoleInput(1):
                 if input.EventType == KEY_EVENT:
                     if input.KeyDown:
@@ -68,6 +60,9 @@ class Application:
                         0
                     )
 
+    def write(self, x, y, txt):
+        self.buffer.WriteConsoleOutputCharacter(txt, PyCOORDType(x, y))
+
 
 class Window:
     def __init__(self, app, x, y, w, h):
@@ -77,22 +72,72 @@ class Window:
         self.w = w
         self.h = h
 
-    def print(self, txt, end):
-        self._write_(self.x + 1, self.y + 1, txt)
+        self.cur = [0, 0]
+        self.buf = [ ]
+
+        self._border_()
+
+    def print(self, txt='', end=True):
+        assert self.w > 2 and self.h > 2
+        #self._write_(1, 1, txt)
+
+        lines = [ ]
+        w = self.w - 2
+        x = self.cur[0]
+
+        while len(txt) > w - x or '\n' in txt:
+            if '\n' in txt and txt.index('\n') < w - x:
+                lines.append(txt[:txt.index('\n')])
+                txt = txt[txt.index('\n')+1:]
+
+            else:
+                lines.append(txt[:w-x])
+                txt = txt[w-x:]
+
+            x = 0
+
+        lines.append(txt)
+
+        if self.cur[0] > 0 and self.buf:
+            self.buf[-1] += lines[0]
+            self.buf.extend(lines[1:])
+
+        else:
+            self.buf.extend(lines)
+
+        if len(self.buf) > self.h - 2:
+            self.buf = self.buf[-(self.h-2):]
+            for y, txt in enumerate(self.buf):
+                self._write_(1, y + 1, txt + ' ' * (w - len(txt)))
+
+        else:
+            x = self.cur[0]
+            for y, txt in enumerate(lines):
+                self._write_(1 + x, 1 + self.cur[1] + y, txt)
+                x = 0
+
+        self.cur[0] = 0 if end else len(self.buf[-1])
+        self.cur[1] = len(self.buf) - (0 if end else 1)
 
     def refresh(self):
-        self._write_(self.x, self.y, '\u250c')
-        self._write_(self.x + 1, self.y, '\u2500' * (self.w - 2))
-        self._write_(self.x + self.w - 1, self.y, '\u2510')
+        pass
 
-        for y in range(self.y + 1, self.y + self.h):
-            self._write_(self.x, y, '\u2502')
-            self._write_(self.x + self.w - 1, y, '\u2502')
+    def _border_(self):
+        self._write_(0, 0, '\u250c')
+        self._write_(1, 0, '\u2500' * (self.w - 2))
+        self._write_(self.w - 1, 0, '\u2510')
 
-        self._write_(self.x, self.y + self.h - 1, '\u2514')
-        self._write_(self.x + 1, self.y + self.h - 1, '\u2500' * (self.w - 2))
-        self._write_(self.x + self.w - 1, self.y + self.h - 1, '\u2518')
+        for y in range(1, self.h):
+            self._write_(0, y, '\u2502')
+            self._write_(self.w - 1, y, '\u2502')
+
+        self._write_(0, self.h - 1, '\u2514')
+        self._write_(1, self.h - 1, '\u2500' * (self.w - 2))
+        self._write_(self.w - 1, self.h - 1, '\u2518')
 
     def _write_(self, x, y, txt):
-        self.app.buffer.WriteConsoleOutputCharacter(txt, PyCOORDType(x, y))
+        assert x >= 0 and x + len(txt) <= self.w
+        assert y >= 0 and y < self.h
+
+        self.app.write(self.x + x, self.y + y, txt)
 
