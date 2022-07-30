@@ -2,8 +2,8 @@ import curses
 
 
 class Application:
-    def __init__(self, app):
-        self.app = app
+    def __init__(self, shell):
+        self.shell = shell
         self.screen = curses.initscr()
         curses.flushinp()
         curses.curs_set(0)
@@ -26,14 +26,14 @@ class Application:
 
     def inputs(self):
         #from time import sleep
-        while self.app.go:
+        while self.shell.go:
             #sleep(1)
             #raise RuntimeError('my bad')
             key = self.screen.getch()
 
             if key == curses.KEY_MOUSE:
                 _, x, y, _, btn = curses.getmouse()
-                self.app.on_mouse(x, y,
+                self.shell.on_mouse(x, y,
                     1 if btn & curses.BUTTON1_PRESSED else \
                     2 if btn & curses.BUTTON1_RELEASED else \
                     3 if btn & curses.BUTTON1_CLICKED else \
@@ -55,7 +55,7 @@ class Application:
                 )
 
             else:
-                self.app.on_key(key)
+                self.shell.on_key(key)
 
 
 class Window:

@@ -76,7 +76,9 @@ class Application:
             self.stop()
 
     def on_mouse(self, x, y, left, mid, right, scroll):
+    #def on_mouse(self, flags, btn, pos):
         self.windows[0].print(f'{x},{y}: {left},{mid},{right},{scroll}')
+        #self.windows[0].print(f'{flags} | {btn} | {pos}')
         self.windows[0].refresh()
         #self.refresh_all()
 
