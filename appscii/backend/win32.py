@@ -23,6 +23,8 @@ class Application:
         size, _ = self.buffer.GetConsoleCursorInfo()
         self.buffer.SetConsoleCursorInfo(size, False)
 
+        self.mpos = (0, 0) # mouse position
+
     def exit(self):
         size, _ = self.buffer.GetConsoleCursorInfo()
         self.buffer.SetConsoleCursorInfo(size, True)
@@ -47,14 +49,17 @@ class Application:
                     flags = input.EventFlags # 1=push, 2=click, 4=scroll
                     pos = input.MousePosition
                     btn = input.ButtonState
-                    #self.shell.on_mouse(flags, btn, pos)
-                    self.shell.on_mouse(pos.X, pos.Y,
+                    scroll = -1 if btn & 4287102976 == 4287102976 else \
+                              1 if btn & 7864320 == 7864320 else 0
+
+                    if not scroll: # mouse position not reliable while scrolling
+                        self.mpos = (pos.X, pos.Y)
+
+                    self.shell.on_mouse(self.mpos[0], self.mpos[1],
                         True if btn & 1 == 1 else False,
                         True if btn & 4 == 4 else False,
                         True if btn & 2 == 2 else False,
-                        -1 if btn & 4287102976 == 4287102976 else \
-                        1 if btn & 7864320 == 7864320 else \
-                        0
+                        scroll
                     )
 
     def write(self, x, y, txt):

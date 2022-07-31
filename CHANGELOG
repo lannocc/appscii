@@ -1,6 +1,8 @@
 Copyright (C) 2022 LANNOCC (Shawn A. Wilson [lannocc@yahoo.com])
 @%@~LICENSE:MIT~@%@
 
+saw_073022_9 - Windows: Fix unreliable mouse position while scrolling.
+
 saw_073022_8 - Version bump: tested on Linux and Win7.
 
 saw_073022_7 - Window movement (Windows).
