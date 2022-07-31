@@ -10,6 +10,8 @@ class Application:
 
         self.core = core.Application(self)
         self.windows = [ ]
+        self.mouse = (False, False, False) # mouse buttons (left, mid, right)
+        self.moving = None
 
     def exit(self):
         self.core.exit()
@@ -23,18 +25,14 @@ class Application:
             name='inputs', daemon=True)
         self.inputs.start()
 
-        self.refresh_all()
-
         self.on_run()
 
     def stop(self, error=None):
         if error:
             if self.error:
-                try:
-                    raise self.error
+                try: raise self.error
                 except Exception as e:
-                    try:
-                        raise error
+                    try: raise error
                     except Exception as e:
                         self.error = e
 
@@ -45,25 +43,28 @@ class Application:
 
     def wrap(self, fn):
         def wrapped():
-            try:
-                fn()
-
+            try: fn()
             except Exception as e:
                 try: raise ThreadException() from e
                 except Exception as e: self.stop(e)
 
         return wrapped
 
-    def refresh(self):
-        self.core.refresh()
+    @property
+    def w(self):
+        return self.core.w
 
-    def refresh_all(self):
-        self.refresh()
-        for win in self.windows:
-            win.refresh()
+    @property
+    def h(self):
+        return self.core.h
 
     def on_run(self):
         #raise RuntimeError('yikes')
+
+        #from time import sleep
+        #sleep(1)
+        #self.windows[0].move_to(42, 9)
+
         self.inputs.join()
 
     def on_key(self, key):
@@ -71,11 +72,29 @@ class Application:
             self.stop()
 
     def on_mouse(self, x, y, left, mid, right, scroll):
-        # this is just for testing:
+        if self.moving:
+            win, mx, my = self.moving
+            if not left:
+                self.moving = None
+
+            if x != mx or y != my:
+                win.move_by(x - mx, y - my)
+                if self.moving:
+                    self.moving = (win, x, y)
+
+        elif left and not self.mouse[0]: # left button pushed
+            for win in self.windows:
+                if x >= win.x and x < win.x + win.w \
+                        and y >= win.y and y < win.y + win.h:
+                    #win.on_mouse(x, y, left, mid, right, scroll)
+
+                    self.moving = (win, x, y)
+                    break
+
+        self.mouse = (left, mid, right)
+
+        # FIXME this is just for testing (assumes we have at least one window):
         self.windows[0].print(f'{x},{y}: {left},{mid},{right},{scroll}')
-        self.windows[0].refresh()
-        #self.refresh_all()
-        pass
 
 
 class ThreadException(Exception):

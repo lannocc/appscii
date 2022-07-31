@@ -23,9 +23,6 @@ class Application:
         curses.flushinp()
         curses.endwin()
 
-    def refresh(self):
-        self.screen.refresh()
-
     def inputs(self):
         while self.shell.go:
             #raise RuntimeError('my bad')
@@ -89,9 +86,22 @@ class Application:
             else:
                 self.shell.on_key(key)
 
+    @property
+    def w(self):
+        return curses.COLS
+
+    @property
+    def h(self):
+        return curses.LINES
+
 
 class Window:
     def __init__(self, app, x, y, w, h):
+        self.app = app
+        assert w >= 2 and h >= 2
+        assert x >= 0 and x + w <= curses.COLS
+        assert y >= 0 and y + h <= curses.LINES
+
         win = curses.newwin(h, w, y, x)
         win.keypad(True)
         win.box()
@@ -102,13 +112,39 @@ class Window:
         win.scrollok(True)
         self.content = win
 
+        self.app.screen.refresh()
+        self.border.refresh()
+
         self.newline = ''
 
     def print(self, txt, end):
         self.content.addstr(f'{self.newline}{txt}')
         self.newline = '\n' if end else ''
-
-    def refresh(self):
-        self.border.refresh()
         self.content.refresh()
+
+    @property
+    def x(self):
+        return self.border.getbegyx()[1]
+
+    @property
+    def y(self):
+        return self.border.getbegyx()[0]
+
+    @property
+    def w(self):
+        return self.border.getmaxyx()[1]
+
+    @property
+    def h(self):
+        return self.border.getmaxyx()[0]
+
+    def set_pos(self, x, y):
+        assert x >= 0 and x + self.w <= self.app.w
+        assert y >= 0 and y + self.h <= self.app.h
+
+        self.app.screen.clear()
+        self.app.screen.refresh()
+        self.border.mvwin(y, x)
+        self.content.mvwin(y + 1, x + 1)
+        self.border.refresh()
 
