@@ -13,6 +13,12 @@ pip install appscii
 
 Coming soon.
 
+## Alternatives
+
+- Python Prompt Toolkit
+- Textualize
+- DeskApp
+
 ## Author
 
 Created by Shawn A. Wilson [lannocc@yahoo.com] aka LANNOCC.

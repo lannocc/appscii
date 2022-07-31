@@ -11,7 +11,7 @@ class Application:
         curses.noecho()
         curses.cbreak()
         self.screen.keypad(True)
-        curses.set_escdelay(99)
+        curses.set_escdelay(222)
         curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
         curses.mouseinterval(0)
 
@@ -107,38 +107,45 @@ class Window:
         win = curses.newwin(h, w, y, x)
         win.keypad(True)
         win.box()
-        self.border = win
-
-        win = win.derwin(h - 2, w - 2, 1, 1)
-        win.keypad(True)
-        win.scrollok(True)
-        self.content = win
+        self.win = win
 
         self.app.screen.refresh()
-        self.border.refresh()
-
-        self.newline = ''
-
-    def print(self, txt='', end=True):
-        self.content.addstr(f'{self.newline}{txt}')
-        self.newline = '\n' if end else ''
-        self.content.refresh()
+        self.win.refresh()
 
     @property
     def x(self):
-        return self.border.getbegyx()[1]
+        return self.win.getbegyx()[1]
 
     @property
     def y(self):
-        return self.border.getbegyx()[0]
+        return self.win.getbegyx()[0]
 
     @property
     def w(self):
-        return self.border.getmaxyx()[1]
+        return self.win.getmaxyx()[1]
 
     @property
     def h(self):
-        return self.border.getmaxyx()[0]
+        return self.win.getmaxyx()[0]
+
+    def write(self, x, y, txt):
+        assert x >= 0 and x + len(txt) <= self.w
+        assert y >= 0 and y < self.h
+
+        self.win.addstr(y, x, txt)
+        self.win.refresh()
+
+    def write_all(self, x, y, lines):
+        assert x >= 0 and x < self.w
+        assert y >= 0 and y < self.h
+        assert y + len(lines) < self.h
+
+        for line in lines:
+            assert x + len(line) <= self.w
+            self.win.addstr(y, x, line)
+            y += 1
+
+        self.win.refresh()
 
     def set_pos(self, x, y):
         assert x >= 0 and x + self.w <= self.app.w
@@ -146,7 +153,16 @@ class Window:
 
         self.app.screen.clear()
         self.app.screen.refresh()
-        self.border.mvwin(y, x)
-        self.content.mvwin(y + 1, x + 1)
-        self.border.refresh()
+        self.win.mvwin(y, x)
+        self.win.refresh()
+
+    def set_size(self, w, h):
+        assert w >= 2 and self.x + w <= self.app.w
+        assert h >= 2 and self.y + h <= self.app.h
+
+        self.app.screen.clear()
+        self.app.screen.refresh()
+        self.win.resize(h, w)
+        self.win.box()
+        self.win.refresh()
 

@@ -1,14 +1,14 @@
 from .backend import core
+from .helper import FlowText
 
 
 class Window:
     def __init__(self, app, x, y, w, h):
         self.app = app
         self.core = core.Window(app.core, x, y, w, h)
-        self.app.windows.append(self)
+        self.text = FlowText(w - 2, h - 2, self.on_flow)
 
-    def print(self, txt='', end=True):
-        self.core.print(txt, end)
+        self.app.windows.append(self)
 
     @property
     def x(self):
@@ -40,7 +40,24 @@ class Window:
 
         self.move_to(x, y)
 
-    #def on_mouse(self, x, y, left, mid, right, scroll):
-    #    # FIXME this is just for testing:
-    #    self.print(f'{x},{y}: {left},{mid},{right},{scroll}')
+    def size_to(self, w, h):
+        self.core.set_size(w, h)
+        self.text.resize(w - 2, h - 2)
+
+    def size_by(self, dw, dh):
+        w = self.w + dw
+        if w < 2: w = 2
+        elif self.x + w > self.app.w: w = self.app.w - self.x
+
+        h = self.h + dh
+        if h < 2: h = 2
+        elif self.y + h > self.app.h: h = self.app.h - self.y
+
+        self.size_to(w, h)
+
+    def on_flow(self, flow):
+        assert flow == self.text
+        view = flow.view()
+        if view is None: return
+        self.core.write_all(1, 1, view)
 

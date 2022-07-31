@@ -6,6 +6,7 @@ from .win import *
 __all__ = [
     '__version__',
     'Application',
+    'Quit',
     'Window',
 ]
 
