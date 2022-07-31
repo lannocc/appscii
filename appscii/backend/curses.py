@@ -4,6 +4,7 @@ import curses
 class Application:
     def __init__(self, shell):
         self.shell = shell
+
         self.screen = curses.initscr()
         curses.flushinp()
         curses.curs_set(0)
@@ -12,6 +13,7 @@ class Application:
         self.screen.keypad(True)
         curses.set_escdelay(99)
         curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
+        curses.mouseinterval(0)
 
         self.mbtns = [False, False, False] # mouse buttons (left, mid, right)
 
@@ -25,7 +27,6 @@ class Application:
 
     def inputs(self):
         while self.shell.go:
-            #raise RuntimeError('my bad')
             key = self.screen.getch()
 
             if key == curses.KEY_MOUSE:
@@ -84,6 +85,7 @@ class Application:
                     self.shell.on_mouse(x, y, mbtns[0], mbtns[1], mbtns[2], 0)
 
             else:
+                #raise RuntimeError('just a test')
                 self.shell.on_key(key)
 
     @property
