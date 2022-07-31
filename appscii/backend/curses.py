@@ -99,8 +99,8 @@ class Window:
     def __init__(self, app, x, y, w, h):
         self.app = app
         assert w >= 2 and h >= 2
-        assert x >= 0 and x + w <= curses.COLS
-        assert y >= 0 and y + h <= curses.LINES
+        assert x >= 0 and x + w <= self.app.w
+        assert y >= 0 and y + h <= self.app.h
 
         win = curses.newwin(h, w, y, x)
         win.keypad(True)
@@ -117,7 +117,7 @@ class Window:
 
         self.newline = ''
 
-    def print(self, txt, end):
+    def print(self, txt='', end=True):
         self.content.addstr(f'{self.newline}{txt}')
         self.newline = '\n' if end else ''
         self.content.refresh()

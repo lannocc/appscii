@@ -29,9 +29,6 @@ class Application:
 
         self.buffer.Close()
 
-    def refresh(self):
-        pass
-
     def inputs(self):
         while self.shell.go:
             for input in self.console.ReadConsoleInput(1):
@@ -63,10 +60,26 @@ class Application:
     def write(self, x, y, txt):
         self.buffer.WriteConsoleOutputCharacter(txt, PyCOORDType(x, y))
 
+    def clear(self):
+        self.buffer.FillConsoleOutputCharacter(' ', self.w * self.h,
+            PyCOORDType(0, 0))
+
+    @property
+    def w(self):
+        return self.buffer.GetConsoleScreenBufferInfo()["Size"].X
+
+    @property
+    def h(self):
+        return self.buffer.GetConsoleScreenBufferInfo()["Size"].Y
+
 
 class Window:
     def __init__(self, app, x, y, w, h):
         self.app = app
+        assert w >= 2 and h >= 2
+        assert x >= 0 and x + w <= self.app.w
+        assert y >= 0 and y + h <= self.app.h
+
         self.x = x
         self.y = y
         self.w = w
@@ -81,6 +94,8 @@ class Window:
         assert self.w > 2 and self.h > 2
         #self._write_(1, 1, txt)
 
+        if not isinstance(txt, str):
+            txt = f'{txt}'
         lines = [ ]
         w = self.w - 2
         x = self.cur[0]
@@ -119,8 +134,14 @@ class Window:
         self.cur[0] = 0 if end else len(self.buf[-1])
         self.cur[1] = len(self.buf) - (0 if end else 1)
 
-    def refresh(self):
-        pass
+    def set_pos(self, x, y):
+        assert x >= 0 and x + self.w <= self.app.w
+        assert y >= 0 and y + self.h <= self.app.h
+
+        self.app.clear()
+        self.x = x
+        self.y = y
+        self._border_()
 
     def _border_(self):
         self._write_(0, 0, '\u250c')
