@@ -11,7 +11,8 @@ class Application:
         curses.noecho()
         curses.cbreak()
         self.screen.keypad(True)
-        curses.set_escdelay(222)
+        try: curses.set_escdelay(222)
+        except AttributeError: pass
         curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
         curses.mouseinterval(0)
 
