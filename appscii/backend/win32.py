@@ -2,6 +2,8 @@ import win32con
 import win32file
 from win32console import *
 
+from time import sleep
+
 
 class Application:
     def __init__(self, shell):
@@ -33,6 +35,11 @@ class Application:
 
     def inputs(self):
         while self.shell.go:
+            # poll for events before blocking and getting them
+            # because the block prevents output from showing up
+            while self.console.GetNumberOfConsoleInputEvents() < 1:
+                sleep(0.01)
+
             for input in self.console.ReadConsoleInput(1):
                 if input.EventType == KEY_EVENT:
                     if input.KeyDown:
@@ -64,6 +71,9 @@ class Application:
 
     def write(self, x, y, txt):
         self.buffer.WriteConsoleOutputCharacter(txt, PyCOORDType(x, y))
+        #dummy = PyINPUT_RECORDType(KEY_EVENT)
+        #dummy.Char = '\0'
+        #self.console.WriteConsoleInput([ dummy ])
 
     def clear(self):
         self.buffer.FillConsoleOutputCharacter(' ', self.w * self.h,
@@ -90,80 +100,69 @@ class Window:
         self.w = w
         self.h = h
 
-        self.cur = [0, 0]
-        self.buf = [ ]
-
+        self.view = [ ]
         self._border_()
 
-    def print(self, txt='', end=True):
-        assert self.w > 2 and self.h > 2
-        #self._write_(1, 1, txt)
-
-        if not isinstance(txt, str):
-            txt = f'{txt}'
-        lines = [ ]
-        w = self.w - 2
-        x = self.cur[0]
-
-        while len(txt) > w - x or '\n' in txt:
-            if '\n' in txt and txt.index('\n') < w - x:
-                lines.append(txt[:txt.index('\n')])
-                txt = txt[txt.index('\n')+1:]
-
-            else:
-                lines.append(txt[:w-x])
-                txt = txt[w-x:]
-
-            x = 0
-
-        lines.append(txt)
-
-        if self.cur[0] > 0 and self.buf:
-            self.buf[-1] += lines[0]
-            self.buf.extend(lines[1:])
-
-        else:
-            self.buf.extend(lines)
-
-        if len(self.buf) > self.h - 2:
-            self.buf = self.buf[-(self.h-2):]
-            for y, txt in enumerate(self.buf):
-                self._write_(1, y + 1, txt + ' ' * (w - len(txt)))
-
-        else:
-            x = self.cur[0]
-            for y, txt in enumerate(lines):
-                self._write_(1 + x, 1 + self.cur[1] + y, txt)
-                x = 0
-
-        self.cur[0] = 0 if end else len(self.buf[-1])
-        self.cur[1] = len(self.buf) - (0 if end else 1)
-
-    def set_pos(self, x, y):
-        assert x >= 0 and x + self.w <= self.app.w
-        assert y >= 0 and y + self.h <= self.app.h
-
-        self.app.clear()
-        self.x = x
-        self.y = y
-        self._border_()
-
-    def _border_(self):
-        self._write_(0, 0, '\u250c')
-        self._write_(1, 0, '\u2500' * (self.w - 2))
-        self._write_(self.w - 1, 0, '\u2510')
-
-        for y in range(1, self.h):
-            self._write_(0, y, '\u2502')
-            self._write_(self.w - 1, y, '\u2502')
-
-        self._write_(0, self.h - 1, '\u2514')
-        self._write_(1, self.h - 1, '\u2500' * (self.w - 2))
-        self._write_(self.w - 1, self.h - 1, '\u2518')
-
-    def _write_(self, x, y, txt):
+    def write(self, x, y, txt):
         assert x >= 0 and x + len(txt) <= self.w
         assert y >= 0 and y < self.h
 
         self.app.write(self.x + x, self.y + y, txt)
+
+        while y >= len(self.view):
+            self.view.append('')
+
+        line = self.view[y]
+        if len(line) < x:
+            self.view[y] = line + ' ' * (x - len(line)) + txt
+        else:
+            self.view[y] = line[:x] + txt + line[x+len(txt):]
+
+    def write_all(self, x, y, lines):
+        assert x >= 0 and x < self.w
+        assert y >= 0 and y < self.h
+        assert y + len(lines) < self.h
+
+        for line in lines:
+            self.write(x, y, line)
+            y += 1
+
+    def set_pos(self, x, y):
+        assert x >= 0 and x + self.w <= self.app.w
+        assert y >= 0 and y + self.h <= self.app.h
+        if x == self.x and y == self.y: return
+
+        self.app.clear()
+        self.x = x
+        self.y = y
+        self._review_()
+
+    def set_size(self, w, h):
+        assert w >= 2 and self.x + w <= self.app.w
+        assert h >= 2 and self.y + h <= self.app.h
+        if w == self.w and h == self.h: return
+
+        self.app.clear()
+        self.w = w
+        self.h = h
+        self._border_()
+        self._review_()
+
+    def _border_(self):
+        self.write(0, 0, '\u250c')
+        self.write(1, 0, '\u2500' * (self.w - 2))
+        self.write(self.w - 1, 0, '\u2510')
+
+        for y in range(1, self.h):
+            self.write(0, y, '\u2502')
+            self.write(self.w - 1, y, '\u2502')
+
+        self.write(0, self.h - 1, '\u2514')
+        self.write(1, self.h - 1, '\u2500' * (self.w - 2))
+        self.write(self.w - 1, self.h - 1, '\u2518')
+
+    def _review_(self):
+        for y in range(self.h):
+            if y >= len(self.view): break
+            self.app.write(self.x, self.y + y, self.view[y][:self.w])
 

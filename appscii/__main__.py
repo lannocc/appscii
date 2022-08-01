@@ -26,7 +26,7 @@ def run():
                 win.text.right()
                 app.sleep(1)
                 win.text.left()
-        #app.on_run = on_run
+        app.on_run = on_run
 
         #raise RuntimeError('__main__ test')
         app.run()
