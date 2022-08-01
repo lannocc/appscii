@@ -37,9 +37,9 @@ class Application:
         if error:
             if self.error:
                 try: raise self.error
-                except Exception as e:
+                except BaseException as e:
                     try: raise error
-                    except Exception as e:
+                    except BaseException as e:
                         self.error = e
 
             else:
@@ -51,7 +51,7 @@ class Application:
     def wrap(self, fn):
         def wrapped():
             try: fn()
-            except Exception as e:
+            except BaseException as e:
                 try: raise ThreadException() from e
                 except Exception as e: self.stop(e)
 
