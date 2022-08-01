@@ -1,6 +1,8 @@
 Copyright (C) 2022 LANNOCC (Shawn A. Wilson [lannocc@yahoo.com])
 @%@~LICENSE:MIT~@%@
 
+saw_080122_2 - Let run() be wrapped. User setup should happen in init().
+
 saw_080122_1 - Fix for python 3.8.
 
 saw_073122_3 - Fix ctrl-c interrupt on Windows.

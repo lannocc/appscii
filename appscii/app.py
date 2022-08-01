@@ -16,22 +16,35 @@ class Application:
         self.sizing = None
 
     def exit(self):
-        self.core.exit()
+        if self.core:
+            self.core.exit()
+            self.core = None
+
         if self.error:
-            raise self.error
+            error = self.error
+            self.error = None
+            raise error
+
+    def init(self):
+        pass
 
     def run(self):
         self.go = True
-
-        self.inputs = Thread(target=self.wrap(self.core.inputs),
-            name='inputs', daemon=True)
-        self.inputs.start()
-
         try:
+            self.init()
+
+            self.inputs = Thread(target=self.wrap(self.core.inputs),
+                name='inputs', daemon=True)
+            self.inputs.start()
+
             self.on_run()
 
         except Quit:
             pass
+
+        finally:
+            self.stop()
+            self.exit()
 
     def stop(self, error=None):
         if error:
