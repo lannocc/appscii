@@ -10,7 +10,7 @@ class Application:
         self.error = None
 
         self.core = core.Application(self)
-        self.windows = [ ]
+        self.windows = [ ] # in z-order (top-most is last)
         self.mouse = (False, False, False) # mouse buttons (left, mid, right)
         self.moving = None
         self.sizing = None
@@ -37,6 +37,7 @@ class Application:
                 name='inputs', daemon=True)
             self.inputs.start()
 
+            self.redraw()
             self.on_run()
 
         except Quit:
@@ -82,6 +83,34 @@ class Application:
     def h(self):
         return self.core.h
 
+    def _attach_(self, win):
+        self._focus_(win)
+
+    def _focus_(self, win):
+        pos = None
+
+        for idx, existing in enumerate(self.windows):
+            if existing is win:
+                pos = idx
+
+            else:
+                existing._unfocus_()
+
+        if pos is not None:
+            del self.windows[pos]
+
+        self.windows.append(win)
+        win._focus_()
+
+    def redraw(self):
+        matrix = core.CharMap(self.w, self.h)
+
+        for win in self.windows:
+            matrix.merge(win.core.matrix, win.x, win.y)
+
+        self.core.matrix.merge(matrix)
+        self.core.refresh()
+
     def on_run(self):
         self.inputs.join()
 
@@ -91,14 +120,15 @@ class Application:
 
     def on_mouse(self, x, y, left, mid, right, scroll):
         if self.moving:
-            win, mx, my = self.moving
-            if not left:
+            win, mx, my, focused = self.moving
+
+            if (focused and not left) or (not focused and not mid):
                 self.moving = None
 
             if x != mx or y != my:
                 win.move_by(x - mx, y - my)
                 if self.moving:
-                    self.moving = (win, x, y)
+                    self.moving = (win, x, y, focused)
 
         elif self.sizing:
             win, sxt, syt = self.sizing
@@ -136,9 +166,11 @@ class Application:
                         (y, syt[1]) if syt else None)
 
         elif left and not self.mouse[0]: # left button pushed
-            for win in self.windows:
-                if x >= win.x and x < win.x + win.w \
-                        and y >= win.y and y < win.y + win.h:
+            for win in reversed(self.windows):
+                if win.collides(x, y):
+                    self._focus_(win)
+                    self.redraw()
+
                     sx = (x, True) if x == win.x else \
                          (x, False) if x == win.x + win.w -1 else \
                          None
@@ -150,14 +182,19 @@ class Application:
                         self.sizing = (win, sx, sy)
 
                     else:
-                        self.moving = (win, x, y)
+                        self.moving = (win, x, y, True)
 
                     break
 
+        elif mid and not self.mouse[1]: # middle button pushed
+            for win in reversed(self.windows):
+                if win.collides(x, y):
+                    self.moving = (win, x, y, False)
+                    break
+
         elif scroll:
-            for win in self.windows:
-                if x >= win.x and x < win.x + win.w \
-                        and y >= win.y and y < win.y + win.h:
+            for win in reversed(self.windows):
+                if win.collides(x, y):
                     if scroll < 0: win.text.down()
                     else: win.text.up()
                     break

@@ -1,6 +1,8 @@
 Copyright (C) 2022 LANNOCC (Shawn A. Wilson [lannocc@yahoo.com])
 @%@~LICENSE:MIT~@%@
 
+saw_080222_1 - Working on new matrix-based universal screen mapping.
+
 saw_080122_3 - Start to play with multiple windows.
 
 saw_080122_2 - Let run() be wrapped. User setup should happen in init().

@@ -1,3 +1,7 @@
+#from . import common
+from .common import Window
+from .matrix import CharMap
+
 import curses
 
 
@@ -16,6 +20,7 @@ class Application:
         curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
         curses.mouseinterval(0)
 
+        self.matrix = CharMap(self.w, self.h)
         self.mbtns = [False, False, False] # mouse buttons (left, mid, right)
 
     def exit(self):
@@ -25,6 +30,14 @@ class Application:
         curses.curs_set(1)
         curses.flushinp()
         curses.endwin()
+
+    @property
+    def w(self):
+        return curses.COLS
+
+    @property
+    def h(self):
+        return curses.LINES
 
     def inputs(self):
         while self.shell.go:
@@ -89,85 +102,20 @@ class Application:
                 #raise RuntimeError('just a test')
                 self.shell.on_key(key)
 
-    def redraw(self):
-        self.screen.redrawwin()
-        self.screen.refresh()
+    def refresh(self):
+        try:
+            for y in range(self.matrix.h):
+                chars = self.matrix.chars[y]
+                changes = self.matrix.changes[y]
 
-        for window in self.shell.windows:
-            window.core.win.redrawwin()
-            window.core.win.refresh()
+                for x in range(self.matrix.w):
+                    if changes[x]:
+                        c = chars[x]
+                        self.screen.addstr(y, x, '.' if c is None else c)
+                        changes[x] = False
 
-    @property
-    def w(self):
-        return curses.COLS
-
-    @property
-    def h(self):
-        return curses.LINES
-
-
-class Window:
-    def __init__(self, app, x, y, w, h):
-        self.app = app
-        assert w >= 2 and h >= 2
-        assert x >= 0 and x + w <= self.app.w
-        assert y >= 0 and y + h <= self.app.h
-
-        win = curses.newwin(h, w, y, x)
-        win.keypad(True)
-        win.box()
-        self.win = win
-
-        self.app.screen.refresh()
-        self.win.refresh()
-
-    @property
-    def x(self):
-        return self.win.getbegyx()[1]
-
-    @property
-    def y(self):
-        return self.win.getbegyx()[0]
-
-    @property
-    def w(self):
-        return self.win.getmaxyx()[1]
-
-    @property
-    def h(self):
-        return self.win.getmaxyx()[0]
-
-    def write(self, x, y, txt):
-        assert x >= 0 and x + len(txt) <= self.w
-        assert y >= 0 and y < self.h
-
-        self.win.addstr(y, x, txt)
-        self.win.refresh()
-
-    def write_all(self, x, y, lines):
-        assert x >= 0 and x < self.w
-        assert y >= 0 and y < self.h
-        assert y + len(lines) < self.h
-
-        for line in lines:
-            assert x + len(line) <= self.w
-            self.win.addstr(y, x, line)
-            y += 1
-
-        self.win.refresh()
-
-    def set_pos(self, x, y):
-        assert x >= 0 and x + self.w <= self.app.w
-        assert y >= 0 and y + self.h <= self.app.h
-
-        self.win.mvwin(y, x)
-        self.app.redraw()
-
-    def set_size(self, w, h):
-        assert w >= 2 and self.x + w <= self.app.w
-        assert h >= 2 and self.y + h <= self.app.h
-
-        self.win.resize(h, w)
-        self.win.box()
-        self.app.redraw()
+        except curses.error as e:
+            # we can ignore error on bottom-right character
+            if not (x == self.w - 1 and y == self.h - 1):
+                raise ValueError(f'at {x},{y} (x,y)') from e
 

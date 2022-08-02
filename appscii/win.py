@@ -7,8 +7,7 @@ class Window:
         self.app = app
         self.core = core.Window(app.core, x, y, w, h)
         self.text = FlowText(w - 2, h - 2, self.on_flow)
-
-        self.app.windows.append(self)
+        self.app._attach_(self)
 
     @property
     def x(self):
@@ -26,8 +25,21 @@ class Window:
     def h(self):
         return self.core.h
 
+    def _focus_(self):
+        self.active = True
+        self.core.frame(True)
+
+    def _unfocus_(self):
+        self.active = False
+        self.core.frame(False)
+
+    def collides(self, x, y):
+        return x >= self.x and x < self.x + self.w \
+            and y >= self.y and y < self.y + self.h
+
     def move_to(self, x, y):
         self.core.set_pos(x, y)
+        self.app.redraw()
 
     def move_by(self, dx, dy):
         x = self.x + dx
@@ -43,6 +55,8 @@ class Window:
     def size_to(self, w, h):
         self.core.set_size(w, h)
         self.text.resize(w - 2, h - 2)
+        self.core.frame(self.active)
+        self.app.redraw()
 
     def size_by(self, dw, dh):
         w = self.w + dw
@@ -60,4 +74,5 @@ class Window:
         view = flow.view()
         if view is None: return
         self.core.write_all(1, 1, view)
+        self.app.redraw()
 
