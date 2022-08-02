@@ -1,4 +1,3 @@
-#from . import common
 from .common import Window
 from .matrix import CharMap
 

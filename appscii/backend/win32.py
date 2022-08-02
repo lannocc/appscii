@@ -1,3 +1,6 @@
+from .common import Window
+from .matrix import CharMap
+
 import win32con
 import win32file
 from win32console import *
@@ -25,6 +28,7 @@ class Application:
         size, _ = self.buffer.GetConsoleCursorInfo()
         self.buffer.SetConsoleCursorInfo(size, False)
 
+        self.matrix = CharMap(self.w, self.h)
         self.mpos = (0, 0) # mouse position
 
     def exit(self):
@@ -32,6 +36,14 @@ class Application:
         self.buffer.SetConsoleCursorInfo(size, True)
 
         self.buffer.Close()
+
+    @property
+    def w(self):
+        return self.buffer.GetConsoleScreenBufferInfo()["Size"].X
+
+    @property
+    def h(self):
+        return self.buffer.GetConsoleScreenBufferInfo()["Size"].Y
 
     def inputs(self):
         while self.shell.go:
@@ -69,100 +81,22 @@ class Application:
                         scroll
                     )
 
-    def write(self, x, y, txt):
-        self.buffer.WriteConsoleOutputCharacter(txt, PyCOORDType(x, y))
-        #dummy = PyINPUT_RECORDType(KEY_EVENT)
-        #dummy.Char = '\0'
-        #self.console.WriteConsoleInput([ dummy ])
-
     def clear(self):
         self.buffer.FillConsoleOutputCharacter(' ', self.w * self.h,
             PyCOORDType(0, 0))
 
-    @property
-    def w(self):
-        return self.buffer.GetConsoleScreenBufferInfo()["Size"].X
-
-    @property
-    def h(self):
-        return self.buffer.GetConsoleScreenBufferInfo()["Size"].Y
-
-
-class Window:
-    def __init__(self, app, x, y, w, h):
-        self.app = app
-        assert w >= 2 and h >= 2
-        assert x >= 0 and x + w <= self.app.w
-        assert y >= 0 and y + h <= self.app.h
-
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-
-        self.view = [ ]
-        self._border_()
-
     def write(self, x, y, txt):
-        assert x >= 0 and x + len(txt) <= self.w
-        assert y >= 0 and y < self.h
+        self.buffer.WriteConsoleOutputCharacter(txt, PyCOORDType(x, y))
 
-        self.app.write(self.x + x, self.y + y, txt)
+    def refresh(self):
+        for y in range(self.matrix.h):
+            chars = self.matrix.chars[y]
+            changes = self.matrix.changes[y]
 
-        while y >= len(self.view):
-            self.view.append('')
-
-        line = self.view[y]
-        if len(line) < x:
-            self.view[y] = line + ' ' * (x - len(line)) + txt
-        else:
-            self.view[y] = line[:x] + txt + line[x+len(txt):]
-
-    def write_all(self, x, y, lines):
-        assert x >= 0 and x < self.w
-        assert y >= 0 and y < self.h
-        assert y + len(lines) < self.h
-
-        for line in lines:
-            self.write(x, y, line)
-            y += 1
-
-    def set_pos(self, x, y):
-        assert x >= 0 and x + self.w <= self.app.w
-        assert y >= 0 and y + self.h <= self.app.h
-        if x == self.x and y == self.y: return
-
-        self.app.clear()
-        self.x = x
-        self.y = y
-        self._review_()
-
-    def set_size(self, w, h):
-        assert w >= 2 and self.x + w <= self.app.w
-        assert h >= 2 and self.y + h <= self.app.h
-        if w == self.w and h == self.h: return
-
-        self.app.clear()
-        self.w = w
-        self.h = h
-        self._border_()
-        self._review_()
-
-    def _border_(self):
-        self.write(0, 0, '\u250c')
-        self.write(1, 0, '\u2500' * (self.w - 2))
-        self.write(self.w - 1, 0, '\u2510')
-
-        for y in range(1, self.h):
-            self.write(0, y, '\u2502')
-            self.write(self.w - 1, y, '\u2502')
-
-        self.write(0, self.h - 1, '\u2514')
-        self.write(1, self.h - 1, '\u2500' * (self.w - 2))
-        self.write(self.w - 1, self.h - 1, '\u2518')
-
-    def _review_(self):
-        for y in range(self.h):
-            if y >= len(self.view): break
-            self.app.write(self.x, self.y + y, self.view[y][:self.w])
+            for x in range(self.matrix.w):
+                if changes[x]:
+                    c = chars[x]
+                    self.buffer.WriteConsoleOutputCharacter(
+                        '.' if c is None else c, PyCOORDType(x, y))
+                    changes[x] = False
 
