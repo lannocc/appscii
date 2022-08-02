@@ -89,6 +89,14 @@ class Application:
                 #raise RuntimeError('just a test')
                 self.shell.on_key(key)
 
+    def redraw(self):
+        self.screen.redrawwin()
+        self.screen.refresh()
+
+        for window in self.shell.windows:
+            window.core.win.redrawwin()
+            window.core.win.refresh()
+
     @property
     def w(self):
         return curses.COLS
@@ -152,18 +160,14 @@ class Window:
         assert x >= 0 and x + self.w <= self.app.w
         assert y >= 0 and y + self.h <= self.app.h
 
-        self.app.screen.clear()
-        self.app.screen.refresh()
         self.win.mvwin(y, x)
-        self.win.refresh()
+        self.app.redraw()
 
     def set_size(self, w, h):
         assert w >= 2 and self.x + w <= self.app.w
         assert h >= 2 and self.y + h <= self.app.h
 
-        self.app.screen.clear()
-        self.app.screen.refresh()
         self.win.resize(h, w)
         self.win.box()
-        self.win.refresh()
+        self.app.redraw()
 

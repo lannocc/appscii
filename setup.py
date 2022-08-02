@@ -9,7 +9,7 @@ def run():
         author_email='lannocc@yahoo.com',
         url='https://github.com/lannocc/appscii',
         packages=setuptools.find_packages(),
-        description='Application in ASCII for Python',
+        description='Application in ASCII',
         long_description_content_type='text/markdown',
         long_description=open('README.md').read(),
         classifiers=[
