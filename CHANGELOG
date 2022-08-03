@@ -1,6 +1,8 @@
 Copyright (C) 2022 LANNOCC (Shawn A. Wilson [lannocc@yahoo.com])
 @%@~LICENSE:MIT~@%@
 
+saw_080322_1 - Update README.
+
 saw_080222_3 - Fix curses screen refresh. Add some debugging.
 
 saw_080222_2 - New matrix method mostly working now.

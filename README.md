@@ -1,6 +1,8 @@
 # appscii
 
-## Application in ASCII for Python
+## Applications in ASCII for Python
+
+Appscii is a lightweight Python toolkit for creating cross-platform applications with a purely text-based interface meant to run in a terminal or console.
 
 ## Installation
 
@@ -11,7 +13,10 @@ pip install appscii
 
 ## Usage
 
-Coming soon.
+There is a demonstration application you can see by running the `appscii` command:
+```
+appscii
+```
 
 ## Alternatives
 
