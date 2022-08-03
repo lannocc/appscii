@@ -102,19 +102,31 @@ class Application:
                 self.shell.on_key(key)
 
     def refresh(self):
-        try:
-            for y in range(self.matrix.h):
-                chars = self.matrix.chars[y]
-                changes = self.matrix.changes[y]
+        #self.debug()
 
-                for x in range(self.matrix.w):
-                    if changes[x]:
-                        c = chars[x]
+        for y in range(self.matrix.h):
+            chars = self.matrix.chars[y]
+            changes = self.matrix.changes[y]
+
+            for x in range(self.matrix.w):
+                if changes[x]:
+                    c = chars[x]
+                    try:
                         self.screen.addstr(y, x, '.' if c is None else c)
-                        changes[x] = False
 
-        except curses.error as e:
-            # we can ignore error on bottom-right character
-            if not (x == self.w - 1 and y == self.h - 1):
-                raise ValueError(f'at {x},{y} (x,y)') from e
+                    except curses.error as e:
+                        # we can ignore error on bottom-right character
+                        if not (x == self.w - 1 and y == self.h - 1):
+                            raise ValueError(f'at {x},{y} (x,y)') from e
+
+                    changes[x] = False
+
+        self.screen.refresh()
+
+    def debug(self):
+        with open('debug.txt', 'a') as out:
+            out.write('\n\n')
+            out.write(self.matrix.debug_changes())
+            out.write('\n---\n')
+            out.write(self.matrix.debug_chars())
 

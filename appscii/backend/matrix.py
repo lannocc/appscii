@@ -82,3 +82,15 @@ class CharMap:
                     chars[cx] = mchar
                     changes[cx] = True
 
+    def debug_chars(self):
+        return '\n'.join([
+            ''.join([ c for c in line ])
+            for line in self.chars
+        ])
+
+    def debug_changes(self):
+        return '\n'.join([
+            ''.join([ '#' if c else '.' for c in line ])
+            for line in self.changes
+        ])
+
