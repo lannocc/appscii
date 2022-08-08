@@ -47,6 +47,8 @@ class CharMap:
         assert y >= 0 and y < self.h
         if self.chars[y][x] == c: return
 
+        # FIXME: what about \n or \t ?
+
         self.chars[y][x] = c
         self.changes[y][x] = True
 
@@ -54,6 +56,8 @@ class CharMap:
         assert c is None or (isinstance(c, str) and len(c) == 1)
         assert x >= 0 and x + w <= self.w
         assert y >= 0 and y + h <= self.h
+
+        # FIXME: what about \n or \t ?
 
         for cy in range(y, y + h):
             chars = self.chars[cy]

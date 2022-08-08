@@ -21,6 +21,10 @@ def run():
         win2 = Window(app, 3, 3, 22, 3)
         win2.text.print('something else')
 
+        win3 = Window(app, 9, 18, 63, 7)
+        win3.text.big()
+        win3.text.print('Big Font Style')
+
         def on_run():
             while app.go:
                 app.sleep(1)

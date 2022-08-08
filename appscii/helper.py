@@ -1,13 +1,15 @@
+from .font import big as big_font
 
 
 class FlowText:
-    def __init__(self, w, h, notify=None, words=False, align=-1):
+    def __init__(self, w, h, notify=None, words=False, align=-1, big=False):
         assert w >= 0 and h >= 0
         self.w = w
         self.h = h
         self.notify = notify
         self.words = words
         self.align = align
+        self.font = 1 if big else 0
 
         self.prints = [ ]
         self.enter = True
@@ -86,6 +88,12 @@ class FlowText:
             self.scroll = -1
         if self.notify: self.notify(self)
 
+    def big(self, big=True):
+        font = 1 if big else 0
+        if self.font == font: return
+
+        self.font = font
+
     def print(self, txt='', enter=True):
         if not isinstance(txt, str):
             txt = f'{txt}'
@@ -98,6 +106,31 @@ class FlowText:
             txt = txt[idx+1:]
 
         prints.append(txt)
+
+        if self.font == 1:
+            fprints = [ ]
+            h = len(big_font.matrix)
+
+            for line in prints:
+                fprints.extend([ '' for y in big_font.matrix ])
+
+                for c in line:
+                    if c in big_font.chars:
+                        if fprints[-1]:
+                            for y in range(h):
+                                fprints[-(h-y)] += ' '
+
+                        x, w = big_font.chars[c]
+                        for y, row in enumerate(big_font.matrix):
+                            fprints[-(h-y)] += row[x:x+w]
+
+                    else:
+                        for y in range(h-1):
+                            fprints[-(h-y)] += ' '
+
+                        fprints[-1] += c
+
+            prints = fprints
 
         if self.enter:
             self.prints.extend(prints)

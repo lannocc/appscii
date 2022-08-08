@@ -56,6 +56,8 @@ class Window:
         assert x >= 0 and x + len(txt) <= self.w
         assert y >= 0 and y < self.h
 
+        # FIXME: what about \n or \t ?
+
         for tx, c in enumerate(txt):
             self.matrix.set(c, x + tx, y)
 
