@@ -1,4 +1,4 @@
-from .font import big as big_font
+from .font import big as big_font, big_only_caps as big_caps
 
 
 class FlowText:
@@ -9,7 +9,7 @@ class FlowText:
         self.notify = notify
         self.words = words
         self.align = align
-        self.font = 1 if big else 0
+        self.font = 2 if big=='caps' else 1 if big else 0
 
         self.prints = [ ]
         self.enter = True
@@ -89,7 +89,7 @@ class FlowText:
         if self.notify: self.notify(self)
 
     def big(self, big=True):
-        font = 1 if big else 0
+        font = 2 if big=='caps' else 1 if big else 0
         if self.font == font: return
 
         self.font = font
@@ -107,21 +107,28 @@ class FlowText:
 
         prints.append(txt)
 
-        if self.font == 1:
+        if self.font:
             fprints = [ ]
-            h = len(big_font.matrix)
+            if self.font == 1:
+                font = big_font
+            elif self.font == 2:
+                font = big_caps
+            else:
+                raise NotImplementedError(f'font type {self.font}')
+
+            h = len(font.matrix)
 
             for line in prints:
-                fprints.extend([ '' for y in big_font.matrix ])
+                fprints.extend([ '' for y in font.matrix ])
 
                 for c in line:
-                    if c in big_font.chars:
+                    if c in font.chars:
                         if fprints[-1]:
                             for y in range(h):
                                 fprints[-(h-y)] += ' '
 
-                        x, w = big_font.chars[c]
-                        for y, row in enumerate(big_font.matrix):
+                        x, w = font.chars[c]
+                        for y, row in enumerate(font.matrix):
                             fprints[-(h-y)] += row[x:x+w]
 
                     else:
